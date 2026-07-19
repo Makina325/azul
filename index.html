@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>globo pirata terminado</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            background: transparent !important;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            overflow: hidden;
+        }            
+        ._0xM1 {
+            width: 728px;
+            height: 786px;
+            background: transparent; 
+            border: none; 
+            overflow: hidden;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            box-shadow: none; 
+        }
+        
+        /* NUEVO ESTILO ANIMADO PARA EL TÍTULO "RADIO MALAJES" */
+        ._0xT2 {
+            font-size: 32px; /* Un poco más grande para que destaque */
+            text-align: center;
+            padding: 25px 15px 10px 15px;
+            font-weight: 800;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            color: #ffffff;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            /* Animación combinada: flotar y parpadeo de neón */
+            animation: flotarTitulo 3s ease-in-out infinite, neonPulso 2s infinite alternate;
+        }
+
+        /* Animación para que el título flote suavemente hacia arriba y abajo */
+        @keyframes flotarTitulo {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-6px); }
+            100% { transform: translateY(0px); }
+        }
+
+        /* Animación para el brillo azul de neón */
+        @keyframes neonPulso {
+            0% {
+                text-shadow: 0 0 4px #fff, 0 0 10px #00f2fe, 0 0 18px #00f2fe;
+            }
+            100% {
+                text-shadow: 0 0 6px #fff, 0 0 16px #00f2fe, 0 0 30px #00f2fe, 0 0 45px #00f2fe;
+            }
+        }
+
+        #canvas-globe {
+            width: 100%;
+            flex-grow: 1;
+            min-height: 480px;
+            position: relative;
+            cursor: grab;
+        }
+        ._0xL3 {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            right: 20px;
+            bottom: 20px;
+            background: rgba(11, 15, 26, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            padding: 20px;
+            display: none;
+            overflow-y: auto;
+            z-index: 20;
+            border: 1px solid rgba(0, 242, 254, 0.4);
+        }
+        .location-item {
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            font-size: 14px;
+            color: #e2e8f0;
+            font-weight: 600;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            transition: background 0.2s;
+        }
+        .location-item:hover {
+            background: rgba(255,255,255,0.02);
+        }
+        .location-item img {
+            width: 24px;
+            height: auto;
+            border-radius: 4px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+        .location-tag {
+            position: absolute;
+            color: #ffffff;
+            font-size: 12px;
+            font-weight: 700;
+            pointer-events: none;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+
+            z-index: 10;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background: transparent !important; 
+            padding: 4px 6px;
+            border: none !important; 
+            backdrop-filter: none !important;
+            box-shadow: none !important; 
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.9), 0 0 8px rgba(0, 242, 254, 0.6); 
+        }
+        .location-tag img {
+            width: 14px;
+            height: auto;
+            border-radius: 2px;
+            filter: drop-shadow(0px 2px 3px rgba(0,0,0,0.5));
+        }
+        ._0xH4 {
+            padding: 25px;
+            text-align: center;
+            border-top: none;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+        #time {
+            font-size: 26px;
+            font-weight: 700;
+            font-family: 'JetBrains Mono', monospace;
+            color: #00f2fe;
+            display: block;
+            margin-bottom: 15px;
+            text-shadow: 0 2px 8px rgba(0, 0, 0, 0.9), 0 0 15px rgba(0, 242, 254, 0.4);
+        }
+        ._0xP5 {
+            background: rgba(0, 242, 254, 0.06); 
+            padding: 12px 40px;
+            border-radius: 12px;
+            border: 1px solid rgba(0, 242, 254, 0.4);
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+            color: #ffffff;
+            font-weight: 600;
+            font-size: 15px;
+            letter-spacing: 0.5px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+        }
+        ._0xP5:hover {
+            background: rgba(0, 242, 254, 0.15);
+            border-color: rgba(0, 242, 254, 0.6);
+            box-shadow: 0 0 20px rgba(0, 242, 254, 0.4);
+            transform: translateY(-1px);
+        }
+        #visNum { 
+            color: #00f2fe; 
+            font-size: 18px; 
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 700;
+            background: rgba(0,0,0,0.4);
+            padding: 2px 8px;
+            border-radius: 6px;
+        }
+        #date {
+            font-size: 14px;
+            margin-top: 15px;
+            color: #00f2fe;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 600;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.9), 0 0 10px rgba(0, 242, 254, 0.3);
+        }
+        .anti-copia {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            color: #00f2fe;
+            font-size: 12px;
+            margin-top: 20px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            font-weight: bold;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+        }
+    </style>
+</head>
+<body>
+<div id="root">
+    <div class="_0xM1">
+      <div class="_0xT2">RADIO MALAJES</div>
+        <div id="canvas-globe">
+            <div class="_0xL3" id="locationData"></div>
+        </div>
+        <div class="_0xH4">
+            <span id="time">--:--:--</span>
+            <div class="_0xP5" id="trigList">VISITANTES ONLINE <span id="visNum">00</span></div>
+            <div id="date">---</div>
+            <marquee class="anti-copia" scrollamount="4">BIENVENIDOS A RADIO MALAJES</marquee>
+        </div>
+    </div>
+</div>
+
+<script>
+    const _0xCf = {
+   apiKey: "AIzaSyCUHZs7ZCLCrdzC8ZsDKSX4DORArnYg3ho",
+  authDomain: "contador-visitas-e4ba2.firebaseapp.com",
+  projectId: "contador-visitas-e4ba2",
+  storageBucket: "contador-visitas-e4ba2.firebasestorage.app",
+  messagingSenderId: "50205627020",
+  appId: "1:50205627020:web:16d44f001e4aefbc3da1a9",
+  measurementId: "G-HGSTC1SD2N"
+    };
+
+    firebase.initializeApp(_0xCf);
+    const db = firebase.firestore();
+    const myId = "M_" + Math.random().toString(36).substr(2, 7);
+
+    document.getElementById("trigList").onclick = function() {
+        const l = document.getElementById("locationData");
+        l.style.display = (l.style.display === "block") ? "none" : "block";
+    };
+
+    const containerWidth = 728;
+    const containerHeight = 500;
+
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(45, containerWidth/containerHeight, 0.1, 1000);
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setClearColor(0x000000, 0); 
+    renderer.setSize(containerWidth, containerHeight);
+    document.getElementById("canvas-globe").appendChild(renderer.domElement);
+
+    const globe = new THREE.Mesh(
+        new THREE.SphereGeometry(0.7, 64, 64),
+        new THREE.MeshPhongMaterial({
+            map: new THREE.TextureLoader().load("https://unpkg.com/three-globe/example/img/earth-blue-marble.jpg"),
+            emissive: new THREE.Color("#00f2fe"),
+            emissiveIntensity: 0.12,
+            transparent: true
+        })
+    );
+    scene.add(globe);
+    scene.add(new THREE.AmbientLight(0xffffff, 1.4));
+    camera.position.z = 3;
+
+    let markers = [];
+    let isDragging = false;
+    let mouseX = 0;
+    const canvasCont = document.getElementById("canvas-globe");
+
+    canvasCont.onmousedown = (e) => { isDragging = true; mouseX = e.clientX; };
+    window.onmouseup = () => { isDragging = false; };
+    canvasCont.onmousemove = (e) => {
+        if (isDragging) {
+            globe.rotation.y += (e.clientX - mouseX) * 0.005;
+            mouseX = e.clientX;
+        }
+    };
+
+    canvasCont.onwheel = (e) => {
+        e.preventDefault(); 
+        camera.position.z += e.deltaY * 0.003;
+        if (camera.position.z < 1.5) camera.position.z = 1.5;
+        if (camera.position.z > 6.0) camera.position.z = 6.0;
+    };
+
+    async function connect() {
+        try {
+            const res = await fetch("https://ipapi.co/json/");
+            const d = await res.json();
+            const ref = db.collection("visitantes-xat").doc(myId);
+            await ref.set({
+                city: d.city || "Desconocida",
+                country: d.country_name || "Mundo",
+                code: (d.country_code || "es").toLowerCase(),
+                lat: d.latitude,
+                lng: d.longitude,
+                t: Date.now()
+            });
+            window.onbeforeunload = () => ref.delete();
+            setInterval(() => ref.update({ t: Date.now() }), 10000);
+        } catch (e) {
+            console.log("Error de conexión de red.");
+        }
+    }
+
+    db.collection("visitantes-xat").onSnapshot(snap => {
+        document.getElementById("visNum").innerText = snap.size < 10 ? "0" + snap.size : snap.size;
+        const list = document.getElementById("locationData");
+        list.innerHTML = ""; 
+        markers.forEach(m => {
+            globe.remove(m.dot);
+            if (m.tag) m.tag.remove();
+        });
+        markers = [];
+
+        snap.forEach(doc => {
+            const u = doc.data();
+            if (Math.abs(Date.now() - u.t) < 300000) {
+                const div = document.createElement("div");
+                div.className = "location-item";
+                div.innerHTML = `<img src="https://flagcdn.com/w40/${u.code}.png" onerror="this.style.display='none'"> <span>${u.city}, ${u.country}</span>`;
+                list.appendChild(div);
+
+                if (u.lat && u.lng) {
+                    const phi = (90 - u.lat) * (Math.PI / 180);
+                    const theta = (u.lng + 180) * (Math.PI / 180);
+                    const pos = new THREE.Vector3(
+                        -0.72 * Math.sin(phi) * Math.cos(theta),
+                        0.72 * Math.cos(phi),
+                        0.72 * Math.sin(phi) * Math.sin(theta)
+                    );
+                    const dot = new THREE.Mesh(
+                        new THREE.SphereGeometry(0.018, 12, 12),
+                        new THREE.MeshBasicMaterial({ color: 0x00f2fe })
+                    );
+                    dot.position.copy(pos);
+                    globe.add(dot);
+
+                    const tag = document.createElement("div");
+                    tag.className = "location-tag";
+                    tag.innerHTML = `${u.city} <img src="https://flagcdn.com/w20/${u.code}.png" onerror="this.style.display='none'">`;
+                    document.getElementById("canvas-globe").appendChild(tag);
+                    markers.push({ dot, tag, pos });
+                }
+            }
+        });
+    });
+
+    function animate() {
+        requestAnimationFrame(animate);
+        if (!isDragging) globe.rotation.y += 0.0025;
+        markers.forEach(m => {
+            const v = m.pos.clone().applyQuaternion(globe.quaternion).project(camera);
+            if (v.z < 1) {
+                m.tag.style.display = "flex";
+                m.tag.style.left = `${(v.x * 0.5 + 0.5) * containerWidth}px`;
+                m.tag.style.top = `${(v.y * -0.5 + 0.5) * containerHeight}px`;
+            } else {
+                m.tag.style.display = "none";
+            }
+        });
+        renderer.render(scene, camera);
+    }
+
+    setInterval(() => {
+        const n = new Date();
+        document.getElementById("time").textContent = n.toLocaleTimeString("es-ES");
+        document.getElementById("date").textContent = n.toLocaleDateString("es-ES", { weekday: "long", day: "numeric", month: "long" });
+    }, 1000);
+
+    connect();
+    animate();
+</script>
+</body>
+</html>
