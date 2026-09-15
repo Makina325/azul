@@ -35,9 +35,8 @@
             box-shadow: none; 
         }
         
-        /* NUEVO ESTILO ANIMADO PARA EL TÍTULO "RADIO MALAJES" */
         ._0xT2 {
-            font-size: 32px; /* Un poco más grande para que destaque */
+            font-size: 32px;
             text-align: center;
             padding: 25px 15px 10px 15px;
             font-weight: 800;
@@ -45,25 +44,18 @@
             color: #ffffff;
             letter-spacing: 3px;
             text-transform: uppercase;
-            /* Animación combinada: flotar y parpadeo de neón */
             animation: flotarTitulo 3s ease-in-out infinite, neonPulso 2s infinite alternate;
         }
 
-        /* Animación para que el título flote suavemente hacia arriba y abajo */
         @keyframes flotarTitulo {
             0% { transform: translateY(0px); }
             50% { transform: translateY(-6px); }
             100% { transform: translateY(0px); }
         }
 
-        /* Animación para el brillo azul de neón */
         @keyframes neonPulso {
-            0% {
-                text-shadow: 0 0 4px #fff, 0 0 10px #00f2fe, 0 0 18px #00f2fe;
-            }
-            100% {
-                text-shadow: 0 0 6px #fff, 0 0 16px #00f2fe, 0 0 30px #00f2fe, 0 0 45px #00f2fe;
-            }
+            0% { text-shadow: 0 0 4px #fff, 0 0 10px #00f2fe, 0 0 18px #00f2fe; }
+            100% { text-shadow: 0 0 6px #fff, 0 0 16px #00f2fe, 0 0 30px #00f2fe, 0 0 45px #00f2fe; }
         }
 
         #canvas-globe {
@@ -118,7 +110,6 @@
             display: flex;
             align-items: center;
             gap: 6px;
-
             z-index: 10;
             font-family: 'Plus Jakarta Sans', sans-serif;
             background: transparent !important; 
@@ -219,18 +210,18 @@
 
 <script>
     const _0xCf = {
-   apiKey: "AIzaSyCUHZs7ZCLCrdzC8ZsDKSX4DORArnYg3ho",
-  authDomain: "contador-visitas-e4ba2.firebaseapp.com",
-  projectId: "contador-visitas-e4ba2",
-  storageBucket: "contador-visitas-e4ba2.firebasestorage.app",
-  messagingSenderId: "50205627020",
-  appId: "1:50205627020:web:16d44f001e4aefbc3da1a9",
-  measurementId: "G-HGSTC1SD2N"
+        apiKey: "AIzaSyCUHZs7ZCLCrdzC8ZsDKSX4DORArnYg3ho",
+        authDomain: "contador-visitas-e4ba2.firebaseapp.com",
+        projectId: "contador-visitas-e4ba2",
+        storageBucket: "contador-visitas-e4ba2.firebasestorage.app",
+        messagingSenderId: "50205627020",
+        appId: "1:50205627020:web:16d44f001e4aefbc3da1a9",
+        measurementId: "G-HGSTC1SD2N"
     };
 
     firebase.initializeApp(_0xCf);
     const db = firebase.firestore();
-    const myId = "M_" + Math.random().toString(36).substr(2, 7);
+    const myId = "M_" + Math.random().toString(36).substr(2, 9);
 
     document.getElementById("trigList").onclick = function() {
         const l = document.getElementById("locationData");
@@ -281,65 +272,99 @@
         if (camera.position.z > 6.0) camera.position.z = 6.0;
     };
 
-    async function connect() {
+    async function getGeoData() {
         try {
             const res = await fetch("https://ipapi.co/json/");
+            if (!res.ok) throw new Error("ipapi bloqueado");
             const d = await res.json();
-            const ref = db.collection("visitantes-xat").doc(myId);
-            await ref.set({
+            return {
                 city: d.city || "Desconocida",
                 country: d.country_name || "Mundo",
                 code: (d.country_code || "es").toLowerCase(),
                 lat: d.latitude,
-                lng: d.longitude,
+                lng: d.longitude
+            };
+        } catch (e) {
+            const resBackup = await fetch("https://ip-api.com/json/?fields=status,country,countryCode,city,lat,lon");
+            const dB = await resBackup.json();
+            return {
+                city: dB.city || "Desconocida",
+                country: dB.country || "Mundo",
+                code: (dB.countryCode || "es").toLowerCase(),
+                lat: dB.lat,
+                lng: dB.lon
+            };
+        }
+    }
+
+    async function connect() {
+        try {
+            const geo = await getGeoData();
+            const ref = db.collection("visitantes-xat").doc(myId);
+            
+            await ref.set({
+                city: geo.city,
+                country: geo.country,
+                code: geo.code,
+                lat: geo.lat,
+                lng: geo.lng,
                 t: Date.now()
             });
+
             window.onbeforeunload = () => ref.delete();
             setInterval(() => ref.update({ t: Date.now() }), 10000);
         } catch (e) {
-            console.log("Error de conexión de red.");
+            console.error("Error al conectar:", e);
         }
     }
 
     db.collection("visitantes-xat").onSnapshot(snap => {
-        document.getElementById("visNum").innerText = snap.size < 10 ? "0" + snap.size : snap.size;
+        const now = Date.now();
+        let activeDocs = [];
+
+        snap.forEach(doc => {
+            const u = doc.data();
+            if (u.t && (now - u.t) < 180000) {
+                activeDocs.push(u);
+            }
+        });
+
+        document.getElementById("visNum").innerText = activeDocs.length < 10 ? "0" + activeDocs.length : activeDocs.length;
         const list = document.getElementById("locationData");
         list.innerHTML = ""; 
+        
         markers.forEach(m => {
             globe.remove(m.dot);
             if (m.tag) m.tag.remove();
         });
         markers = [];
 
-        snap.forEach(doc => {
-            const u = doc.data();
-            if (Math.abs(Date.now() - u.t) < 300000) {
-                const div = document.createElement("div");
-                div.className = "location-item";
-                div.innerHTML = `<img src="https://flagcdn.com/w40/${u.code}.png" onerror="this.style.display='none'"> <span>${u.city}, ${u.country}</span>`;
-                list.appendChild(div);
+        activeDocs.forEach(u => {
+            const div = document.createElement("div");
+            div.className = "location-item";
+            div.innerHTML = `<img src="https://flagcdn.com/w40/${u.code}.png" onerror="this.style.display='none'"> <span>${u.city}, ${u.country}</span>`;
+            list.appendChild(div);
 
-                if (u.lat && u.lng) {
-                    const phi = (90 - u.lat) * (Math.PI / 180);
-                    const theta = (u.lng + 180) * (Math.PI / 180);
-                    const pos = new THREE.Vector3(
-                        -0.72 * Math.sin(phi) * Math.cos(theta),
-                        0.72 * Math.cos(phi),
-                        0.72 * Math.sin(phi) * Math.sin(theta)
-                    );
-                    const dot = new THREE.Mesh(
-                        new THREE.SphereGeometry(0.018, 12, 12),
-                        new THREE.MeshBasicMaterial({ color: 0x00f2fe })
-                    );
-                    dot.position.copy(pos);
-                    globe.add(dot);
+            if (u.lat !== undefined && u.lng !== undefined) {
+                const phi = (90 - u.lat) * (Math.PI / 180);
+                const theta = (u.lng + 180) * (Math.PI / 180);
+                const pos = new THREE.Vector3(
+                    -0.72 * Math.sin(phi) * Math.cos(theta),
+                    0.72 * Math.cos(phi),
+                    0.72 * Math.sin(phi) * Math.sin(theta)
+                );
+                const dot = new THREE.Mesh(
+                    new THREE.SphereGeometry(0.018, 12, 12),
+                    new THREE.MeshBasicMaterial({ color: 0x00f2fe })
+                );
+                dot.position.copy(pos);
+                globe.add(dot);
 
-                    const tag = document.createElement("div");
-                    tag.className = "location-tag";
-                    tag.innerHTML = `${u.city} <img src="https://flagcdn.com/w20/${u.code}.png" onerror="this.style.display='none'">`;
-                    document.getElementById("canvas-globe").appendChild(tag);
-                    markers.push({ dot, tag, pos });
-                }
+                const tag = document.createElement("div");
+                tag.className = "location-tag";
+                tag.innerHTML = `${u.city} <img src="https://flagcdn.com/w20/${u.code}.png" onerror="this.style.display='none'">`;
+                document.getElementById("canvas-globe").appendChild(tag);
+                markers.push({ dot, tag, pos });
             }
         });
     });
