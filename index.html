@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>globo pirata terminado</title>
+    <title>AZUL RETOCADO</title>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
@@ -203,25 +203,26 @@
             <span id="time">--:--:--</span>
             <div class="_0xP5" id="trigList">VISITANTES ONLINE <span id="visNum">00</span></div>
             <div id="date">---</div>
-            <marquee class="anti-copia" scrollamount="4">BIENVENIDOS A RADIO MALAJES</marquee>
+            <marquee class="anti-copia" scrollamount="4">BIENVENIDOS A RADIO MALAJES BUENA MUSICA Y BUENOS AMIGOS...</marquee>
         </div>
     </div>
 </div>
 
 <script>
     const _0xCf = {
-        apiKey: "AIzaSyCUHZs7ZCLCrdzC8ZsDKSX4DORArnYg3ho",
-        authDomain: "contador-visitas-e4ba2.firebaseapp.com",
-        projectId: "contador-visitas-e4ba2",
-        storageBucket: "contador-visitas-e4ba2.firebasestorage.app",
-        messagingSenderId: "50205627020",
-        appId: "1:50205627020:web:16d44f001e4aefbc3da1a9",
-        measurementId: "G-HGSTC1SD2N"
-    };
+  apiKey: "AIzaSyDizkHA4ac6nDyn_W4VPFgPMEUskwnMMVI",
+  authDomain: "morenos-8d654.firebaseapp.com",
+  projectId: "morenos-8d654",
+  storageBucket: "morenos-8d654.firebasestorage.app",
+  messagingSenderId: "255854994253",
+  appId: "1:255854994253:web:87567047a6589579080d04",
+  measurementId: "G-FC3TZ2GCNR"
+   };
 
     firebase.initializeApp(_0xCf);
     const db = firebase.firestore();
     const myId = "M_" + Math.random().toString(36).substr(2, 9);
+	
 
     document.getElementById("trigList").onclick = function() {
         const l = document.getElementById("locationData");
@@ -275,7 +276,6 @@
     async function getGeoData() {
         try {
             const res = await fetch("https://ipapi.co/json/");
-            if (!res.ok) throw new Error("ipapi bloqueado");
             const d = await res.json();
             return {
                 city: d.city || "Desconocida",
@@ -300,7 +300,7 @@
     async function connect() {
         try {
             const geo = await getGeoData();
-            const ref = db.collection("visitantes-xat").doc(myId);
+            const ref = db.collection("morenos-8d654").doc(myId);
             
             await ref.set({
                 city: geo.city,
@@ -318,7 +318,7 @@
         }
     }
 
-    db.collection("visitantes-xat").onSnapshot(snap => {
+    db.collection("morenos-8d654").onSnapshot(snap => {
         const now = Date.now();
         let activeDocs = [];
 
