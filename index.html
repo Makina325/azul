@@ -8,7 +8,7 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>    
     <style>
-        * {
+- {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
@@ -362,7 +362,7 @@
 
                 const tag = document.createElement("div");
                 tag.className = "location-tag";
-                tag.innerHTML = `${u.city} <img src="https://flagcdn.com/w20/${u.code}.png" onerror="this.style.display='none'">`;
+                tag.innerHTML = `${u.city}, ${u.country} <img src="https://flagcdn.com/w20/${u.code}.png" onerror="this.style.display='none'">`;
                 document.getElementById("canvas-globe").appendChild(tag);
                 markers.push({ dot, tag, pos });
             }
